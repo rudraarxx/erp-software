@@ -16,11 +16,12 @@ export const ROLE_LABELS: Record<UserRole, string> = {
   storekeeper:     'Storekeeper',
 };
 
-/** Nav sections each role is allowed to access */
 export const ROLE_NAV_ACCESS: Record<UserRole, string[]> = {
   admin: [
     'overview',
+    'staff',
     'projects',
+    'labour',
     'attendance',
     'subcontractors',
     'materials',
@@ -29,16 +30,19 @@ export const ROLE_NAV_ACCESS: Record<UserRole, string[]> = {
     'site',
     'finance',
     'invoices',
+    'reports',
   ],
   project_manager: [
     'overview',
     'projects',
+    'labour',
     'attendance',
     'subcontractors',
     'materials',
     'warehouse',
     'equipment',
     'site',
+    'reports',
   ],
   supervisor: [
     'overview',

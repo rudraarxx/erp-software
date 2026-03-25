@@ -23,6 +23,7 @@ type Profile = {
   name: string | null;
   role: string;
   created_at: string;
+  status?: "active" | "pending";
 };
 
 const ROLES = [
@@ -48,13 +49,27 @@ export default function StaffPage() {
 
   async function fetchProfiles() {
     setLoading(true);
-    const { data, error } = await supabase
+    const { data: activeProfiles, error: profileErr } = await supabase
       .from("profiles")
       .select("*")
       .order("created_at", { ascending: false });
 
-    if (!error && data) {
-      setProfiles(data);
+    const { data: pendingInvites } = await supabase
+      .from("staff_invites")
+      .select("*")
+      .order("created_at", { ascending: false });
+
+    if (!profileErr && activeProfiles) {
+      const active = activeProfiles.map((p) => ({ ...p, status: "active" as const }));
+      const pending = (pendingInvites || []).map((i) => ({
+        id: i.id,
+        email: i.email,
+        name: null,
+        role: i.role,
+        created_at: i.created_at,
+        status: "pending" as const
+      }));
+      setProfiles([...active, ...pending].sort((a,b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
     }
     setLoading(false);
   }
@@ -64,18 +79,45 @@ export default function StaffPage() {
     setInviteLoading(true);
     setInviteStatus(null);
 
-    // In a real app with Supabase Admin API:
-    // const { error } = await supabase.auth.admin.inviteUserByEmail(inviteEmail, { data: { role: inviteRole } });
-    
-    // For MVP/Demo purposes, we'll simulate it or show instructions
-    setTimeout(() => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) throw new Error("Not authenticated");
+
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_id")
+        .eq("id", session.user.id)
+        .single();
+
+      if (!profile?.company_id) {
+        throw new Error("You must belong to a company to invite staff.");
+      }
+
+      const { error } = await supabase.from("staff_invites").insert({
+        company_id: profile.company_id,
+        email: inviteEmail,
+        role: inviteRole,
+        invited_by: session.user.id
+      });
+
+      if (error) {
+        if (error.code === '23505') throw new Error("An invite for this email already exists.");
+        throw error;
+      }
+
       setInviteStatus({
         type: "success",
-        message: `Invite instructions for ${inviteEmail} have been generated. Please ask them to sign up at /login, and their role will be set to ${inviteRole}.`
+        message: `Invite sent to ${inviteEmail}. Please ask them to sign up.`
       });
+      fetchProfiles();
+    } catch (err: any) {
+      setInviteStatus({
+        type: "error",
+        message: err.message || "Failed to send invite."
+      });
+    } finally {
       setInviteLoading(false);
-      // In a real implementation, we would actually trigger an email or create a pending record
-    }, 1500);
+    }
   };
 
   return (
@@ -150,7 +192,12 @@ export default function StaffPage() {
                         </div>
                         <div>
                           <p className="text-sm font-bold text-[#1C1C1C]">{profile.name || "Unnamed User"}</p>
-                          <p className="text-xs text-[#1C1C1C]/50">{profile.email}</p>
+                          <div className="flex items-center gap-2">
+                             <p className="text-xs text-[#1C1C1C]/50">{profile.email}</p>
+                             {profile.status === "pending" && (
+                               <span className="text-[10px] font-bold uppercase tracking-wider bg-orange-100 text-orange-700 px-1.5 py-0.5 rounded-sm">Pending</span>
+                             )}
+                          </div>
                         </div>
                       </div>
                     </td>

@@ -20,6 +20,8 @@ import {
   Bell,
   Search,
   Warehouse,
+  BarChart,
+  Shield,
 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 import { useRouter } from "next/navigation";
@@ -31,12 +33,15 @@ const ALL_NAV_LINKS = [
   { name: "Projects",       href: "/dashboard/projects",     icon: FolderKanban,    section: "projects" },
   { name: "Attendance",     href: "/dashboard/attendance",   icon: UserCheck,       section: "attendance" },
   { name: "Subcontractors", href: "/dashboard/subcontractors", icon: Users,         section: "subcontractors" },
+  { name: "Labour Directory",href: "/dashboard/labour",      icon: Users,           section: "labour" },
   { name: "Materials",      href: "/dashboard/materials",    icon: Package,         section: "materials" },
   { name: "Warehouse",      href: "/dashboard/warehouse",    icon: Warehouse,       section: "warehouse" },
   { name: "Equipment",      href: "/dashboard/equipment",    icon: Wrench,          section: "equipment" },
   { name: "Site Activity",  href: "/dashboard/site",         icon: Activity,        section: "site" },
   { name: "Finance",        href: "/dashboard/finance",      icon: Wallet,          section: "finance" },
   { name: "Invoices",       href: "/dashboard/invoices",     icon: FileText,        section: "invoices" },
+  { name: "Staff",          href: "/dashboard/staff",        icon: Shield,          section: "staff" },
+  { name: "Reports",        href: "/dashboard/reports",      icon: BarChart,        section: "reports" },
 ];
 
 export default function DashboardLayout({ children }: { children: React.ReactNode }) {

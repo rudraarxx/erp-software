@@ -60,10 +60,13 @@ export default function LabourAttendancePage() {
     const { data: userData } = await supabase.auth.getUser();
     if (!userData.user) return;
     const { data: profile } = await supabase.from("profiles").select("company_id").eq("id", userData.user.id).single();
-    if (!profile?.company_id) return;
-    const { data } = await supabase.from("labor").select("*").eq("company_id", profile.company_id).eq("is_active", true).order("trade").order("name");
+    if (!profile?.company_id || !selectedProject) return;
+    const { data } = await supabase.from("labor").select("*")
+      .eq("company_id", profile.company_id)
+      .eq("current_project_id", selectedProject)
+      .eq("is_active", true).order("trade").order("name");
     setLaborers(data ?? []);
-  }, [supabase]);
+  }, [supabase, selectedProject]);
 
   useEffect(() => { loadLaborers(); }, [loadLaborers]);
 
@@ -129,6 +132,7 @@ export default function LabourAttendancePage() {
     if (!profile?.company_id) { setAddingLabor(false); return; }
     await supabase.from("labor").insert({
       company_id: profile.company_id,
+      current_project_id: selectedProject,
       name: newName.trim(),
       trade: newTrade,
       rate_per_day: newRate ? parseFloat(newRate) : null,
