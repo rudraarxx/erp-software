@@ -56,7 +56,14 @@ export default function ProjectsPage() {
 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!profile?.company_id || !formData.name) return;
+    if (!formData.name) {
+      alert("Project Name is required.");
+      return;
+    }
+    if (!profile?.company_id) {
+      alert("Error: Your profile does not have a company assigned. You must belong to a company to create a project.");
+      return;
+    }
     
     setIsCreating(true);
     const { error } = await supabase.from("projects").insert({

@@ -58,6 +58,7 @@ export function useProfile(): UseProfileReturn {
       if (cancelled) return;
 
       if (dbError || !data) {
+        if (dbError) console.error("useProfile DB Error:", dbError);
         // Fallback: use auth metadata (e.g., first login before trigger fires)
         setProfile({
           id: user.id,
