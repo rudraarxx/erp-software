@@ -1,12 +1,46 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { Mail, MapPin, Phone, Send } from "lucide-react";
+import { Mail, MapPin, Phone, Send, Loader2, CheckCircle2, AlertCircle } from "lucide-react";
 import { SmoothScroll } from "@/components/global/SmoothScroll";
 import { Navbar } from "@/components/global/Navbar";
 import { Footer } from "@/components/global/Footer";
+import { useState } from "react";
+import { sendContactInquiry } from "./actions";
 
 export default function Contact() {
+  const [formData, setFormData] = useState({
+    fullName: "",
+    phone: "",
+    email: "",
+    projectType: "",
+    details: ""
+  });
+  const [loading, setLoading] = useState(false);
+  const [status, setStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setStatus(null);
+
+    const result = await sendContactInquiry(formData);
+    
+    if (result.success) {
+      setStatus({ type: "success", message: result.message || "Thank you for your inquiry!" });
+      setFormData({
+        fullName: "",
+        phone: "",
+        email: "",
+        projectType: "",
+        details: ""
+      });
+    } else {
+      setStatus({ type: "error", message: result.error || "Failed to send inquiry." });
+    }
+    setLoading(false);
+  };
+
   return (
     <SmoothScroll>
       <Navbar />
@@ -55,27 +89,60 @@ export default function Contact() {
               transition={{ delay: 0.3 }}
               className="bg-card border border-white/5 rounded-3xl p-8 md:p-10 shadow-xl"
             >
-              <form className="space-y-6">
+              {status && (
+                <div className={`mb-8 p-4 rounded-xl flex items-start gap-4 ${status.type === 'success' ? 'bg-green-500/10 border border-green-500/20 text-green-400' : 'bg-red-500/10 border border-red-500/20 text-red-400'}`}>
+                  {status.type === 'success' ? <CheckCircle2 className="w-5 h-5 shrink-0 mt-0.5" /> : <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />}
+                  <p className="text-sm font-medium">{status.message}</p>
+                </div>
+              )}
+
+              <form onSubmit={handleSubmit} className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-white/80">Full Name</label>
-                    <input type="text" className="w-full bg-background border border-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-secondary transition-colors" placeholder="John Doe" />
+                    <input 
+                      type="text" 
+                      required
+                      value={formData.fullName}
+                      onChange={(e) => setFormData({...formData, fullName: e.target.value})}
+                      className="w-full bg-background border border-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-secondary transition-colors" 
+                      placeholder="John Doe" 
+                    />
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-white/80">Phone Number</label>
-                    <input type="tel" className="w-full bg-background border border-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-secondary transition-colors" placeholder="+91 90000 00000" />
+                    <input 
+                      type="tel" 
+                      required
+                      value={formData.phone}
+                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
+                      className="w-full bg-background border border-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-secondary transition-colors" 
+                      placeholder="+91 90000 00000" 
+                    />
                   </div>
                 </div>
                 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-white/80">Email Address</label>
-                  <input type="email" className="w-full bg-background border border-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-secondary transition-colors" placeholder="john@example.com" />
+                  <input 
+                    type="email" 
+                    required
+                    value={formData.email}
+                    onChange={(e) => setFormData({...formData, email: e.target.value})}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-secondary transition-colors" 
+                    placeholder="john@example.com" 
+                  />
                 </div>
                 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-white/80">Project Type</label>
-                  <select className="w-full bg-background border border-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-secondary transition-colors appearance-none">
-                    <option value="" disabled selected>Select Project Type</option>
+                  <select 
+                    required
+                    value={formData.projectType}
+                    onChange={(e) => setFormData({...formData, projectType: e.target.value})}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-secondary transition-colors appearance-none"
+                  >
+                    <option value="" disabled>Select Project Type</option>
                     <option value="residential">Residential Construction</option>
                     <option value="commercial">Commercial Construction</option>
                     <option value="industrial">Industrial Facility</option>
@@ -86,12 +153,25 @@ export default function Contact() {
 
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-white/80">Project Details</label>
-                  <textarea rows={5} className="w-full bg-background border border-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-secondary transition-colors resize-none" placeholder="Tell us about your project location, rough budget, and timeline..."></textarea>
+                  <textarea 
+                    rows={5} 
+                    required
+                    value={formData.details}
+                    onChange={(e) => setFormData({...formData, details: e.target.value})}
+                    className="w-full bg-background border border-border rounded-xl px-4 py-3 text-white focus:outline-none focus:border-secondary transition-colors resize-none" 
+                    placeholder="Tell us about your project location, rough budget, and timeline..."
+                  ></textarea>
                 </div>
 
-                <button type="button" className="w-full bg-secondary text-primary font-bold px-8 py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-white transition-colors group">
-                  Send Inquiry
-                  <Send className="w-4 h-4 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
+                <button 
+                  type="submit" 
+                  disabled={loading}
+                  className="w-full bg-secondary text-primary font-bold px-8 py-4 rounded-xl flex items-center justify-center gap-2 hover:bg-white transition-colors group disabled:opacity-50"
+                >
+                  {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : <>
+                    Send Inquiry
+                    <Send className="w-4 h-4 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
+                  </>}
                 </button>
               </form>
             </motion.div>

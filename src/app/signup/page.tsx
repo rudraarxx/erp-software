@@ -12,16 +12,22 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
+import { useSearchParams } from "next/navigation";
 
 export default function SignupPage() {
   const router = useRouter();
   const supabase = createClient();
+  const searchParams = useSearchParams();
   
-  const [email, setEmail] = useState("");
+  const [email, setEmail] = useState(searchParams.get("email") || "");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Capture role and company from invite link if present
+  const inviteRole = searchParams.get("role");
+  const inviteCompany = searchParams.get("company");
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,6 +40,8 @@ export default function SignupPage() {
       options: {
         data: {
           full_name: fullName,
+          role: inviteRole || 'staff', // Default to staff if no invite role
+          company_id: inviteCompany,
         },
       },
     });

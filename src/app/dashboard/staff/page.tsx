@@ -16,6 +16,7 @@ import {
   AlertCircle
 } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { inviteStaffAction, resendStaffInviteAction } from "./actions";
 
 type Profile = {
   id: string;
@@ -42,6 +43,7 @@ export default function StaffPage() {
   const [inviteRole, setInviteRole] = useState("supervisor");
   const [inviteLoading, setInviteLoading] = useState(false);
   const [inviteStatus, setInviteStatus] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [resendingEmails, setResendingEmails] = useState<string[]>([]);
 
   useEffect(() => {
     fetchProfiles();
@@ -74,40 +76,22 @@ export default function StaffPage() {
     setLoading(false);
   }
 
+
   const handleInvite = async (e: React.FormEvent) => {
     e.preventDefault();
     setInviteLoading(true);
     setInviteStatus(null);
 
     try {
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) throw new Error("Not authenticated");
+      const result = await inviteStaffAction(inviteEmail, inviteRole);
 
-      const { data: profile } = await supabase
-        .from("profiles")
-        .select("company_id")
-        .eq("id", session.user.id)
-        .single();
-
-      if (!profile?.company_id) {
-        throw new Error("You must belong to a company to invite staff.");
-      }
-
-      const { error } = await supabase.from("staff_invites").insert({
-        company_id: profile.company_id,
-        email: inviteEmail,
-        role: inviteRole,
-        invited_by: session.user.id
-      });
-
-      if (error) {
-        if (error.code === '23505') throw new Error("An invite for this email already exists.");
-        throw error;
+      if (!result.success) {
+        throw new Error(result.error || "Failed to send invite.");
       }
 
       setInviteStatus({
         type: "success",
-        message: `Invite sent to ${inviteEmail}. Please ask them to sign up.`
+        message: result.message || "Invite sent successfully!"
       });
       fetchProfiles();
     } catch (err: any) {
@@ -117,6 +101,23 @@ export default function StaffPage() {
       });
     } finally {
       setInviteLoading(false);
+    }
+  };
+
+  const handleResend = async (email: string) => {
+    setResendingEmails(prev => [...prev, email]);
+    try {
+      const result = await resendStaffInviteAction(email);
+      if (!result.success) {
+        alert(result.error || "Failed to resend invite.");
+      } else {
+        // Show a brief success message? For now just an alert or we can use the inviteStatus state
+        setInviteStatus({ type: "success", message: result.message || "Invitation resent!" });
+      }
+    } catch (err: any) {
+      alert(err.message || "An error occurred.");
+    } finally {
+      setResendingEmails(prev => prev.filter(e => e !== email));
     }
   };
 
@@ -211,9 +212,25 @@ export default function StaffPage() {
                       {new Date(profile.created_at).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 text-right">
-                      <button className="p-2 text-[#1C1C1C]/30 hover:text-[#1C1C1C] hover:bg-[#1C1C1C]/5 rounded-lg transition-all">
-                        <MoreHorizontal className="w-5 h-5" />
-                      </button>
+                      <div className="flex items-center justify-end gap-2 text-right">
+                        {profile.status === "pending" && (
+                          <button 
+                            onClick={() => handleResend(profile.email)}
+                            disabled={resendingEmails.includes(profile.email)}
+                            className="bg-[#1C1C1C]/5 hover:bg-primary/10 text-[#1C1C1C]/60 hover:text-primary px-3 py-1.5 rounded-lg text-xs font-bold transition-all flex items-center gap-1.5 disabled:opacity-50"
+                          >
+                            {resendingEmails.includes(profile.email) ? (
+                              <Loader2 className="w-3 h-3 animate-spin" />
+                            ) : (
+                              <Mail className="w-3 h-3" />
+                            )}
+                            Resend Invite
+                          </button>
+                        )}
+                        <button className="p-2 text-[#1C1C1C]/30 hover:text-[#1C1C1C] hover:bg-[#1C1C1C]/5 rounded-lg transition-all">
+                          <MoreHorizontal className="w-5 h-5" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
