@@ -8,6 +8,7 @@ import { useRef, useState } from "react";
 import { homeData } from "@/lib/data/home";
 import { Navbar } from "@/components/global/Navbar";
 import { Footer } from "@/components/global/Footer";
+import { SmoothScroll } from "@/components/global/SmoothScroll";
 import { cn } from "@/lib/utils";
 
 export default function Home() {
@@ -21,7 +22,7 @@ export default function Home() {
   const yHeroImg = useTransform(scrollYProgress, [0, 1], ["0%", "20%"]);
 
   return (
-    <>
+    <SmoothScroll>
       <Navbar />
       <main ref={containerRef} className="min-h-screen bg-background text-secondary">
         
@@ -225,7 +226,7 @@ export default function Home() {
 
       </main>
       <Footer />
-    </>
+    </SmoothScroll>
   );
 }
 

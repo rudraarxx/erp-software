@@ -31,6 +31,7 @@ export const ROLE_NAV_ACCESS: Record<UserRole, string[]> = {
     'finance',
     'invoices',
     'reports',
+    'management',
   ],
   project_manager: [
     'overview',

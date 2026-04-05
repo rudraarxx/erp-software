@@ -35,10 +35,8 @@ export default function RootLayout({
       <body
         className={`${plusJakartaSans.variable} ${sora.variable} antialiased`}
       >
-        <SmoothScroll>
-          <CustomCursor />
-          {children}
-        </SmoothScroll>
+        <CustomCursor />
+        {children}
       </body>
     </html>
   );
